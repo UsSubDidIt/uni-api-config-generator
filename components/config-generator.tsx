@@ -8,7 +8,7 @@ import { ProvidersForm } from "@/components/providers-form"
 import { ApiKeysForm } from "@/components/api-keys-form"
 import { PreferencesForm } from "@/components/preferences-form"
 import { ConfigPreview } from "@/components/config-preview"
-import { Download, Copy } from "lucide-react"
+import { Download, Copy, PanelRightClose, PanelRightOpen } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { Provider, ApiKey, Preferences, ConfigData } from "@/types/config"
 
@@ -16,6 +16,7 @@ export function ConfigGenerator() {
   const { toast } = useToast()
   const [providers, setProviders] = useState<Provider[]>([])
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([])
+  const [showPreview, setShowPreview] = useState(true)
   const [preferences, setPreferences] = useState<Preferences>({
     model_timeout: {},
     cooldown_period: 300,
@@ -25,11 +26,16 @@ export function ConfigGenerator() {
     proxy: "",
   })
 
-  // Update the configData object to use apiKeys instead of api_keys
   const configData: ConfigData = {
     providers,
-    apiKeys, // Changed from api_keys: apiKeys to just apiKeys
+    apiKeys,
     preferences,
+  }
+
+  const handleConfigUpdate = (newConfig: ConfigData) => {
+    setProviders(newConfig.providers)
+    setApiKeys(newConfig.apiKeys)
+    setPreferences(newConfig.preferences)
   }
 
   const handleCopyConfig = () => {
@@ -205,53 +211,56 @@ export function ConfigGenerator() {
   }
 
   return (
-    <div className="space-y-6">
-      <Tabs defaultValue="providers" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="providers">服务提供商</TabsTrigger>
-          <TabsTrigger value="api-keys">API 密钥</TabsTrigger>
-          <TabsTrigger value="preferences">全局配置</TabsTrigger>
-          <TabsTrigger value="preview">预览</TabsTrigger>
-        </TabsList>
-        <TabsContent value="providers" className="mt-6">
-          <Card>
-            <CardContent className="pt-6">
-              <ProvidersForm providers={providers} setProviders={setProviders} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="api-keys" className="mt-6">
-          <Card>
-            <CardContent className="pt-6">
-              <ApiKeysForm apiKeys={apiKeys} setApiKeys={setApiKeys} providers={providers} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="preferences" className="mt-6">
-          <Card>
-            <CardContent className="pt-6">
-              <PreferencesForm preferences={preferences} setPreferences={setPreferences} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="preview" className="mt-6">
-          <Card>
-            <CardContent className="pt-6">
-              <ConfigPreview configData={configData} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+    <div className="flex gap-4 h-full">
+      <div className="flex-1">
+        <Tabs defaultValue="providers" className="w-full">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="providers">服务提供商</TabsTrigger>
+            <TabsTrigger value="api-keys">API 密钥</TabsTrigger>
+            <TabsTrigger value="preferences">全局配置</TabsTrigger>
+          </TabsList>
+          <TabsContent value="providers" className="mt-6">
+            <Card>
+              <CardContent className="pt-6">
+                <ProvidersForm providers={providers} setProviders={setProviders} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="api-keys" className="mt-6">
+            <Card>
+              <CardContent className="pt-6">
+                <ApiKeysForm apiKeys={apiKeys} setApiKeys={setApiKeys} providers={providers} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="preferences" className="mt-6">
+            <Card>
+              <CardContent className="pt-6">
+                <PreferencesForm preferences={preferences} setPreferences={setPreferences} />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
 
-      <div className="flex justify-end gap-4">
-        <Button variant="outline" onClick={handleCopyConfig}>
-          <Copy className="mr-2 h-4 w-4" />
-          复制配置
-        </Button>
-        <Button onClick={handleDownloadConfig}>
-          <Download className="mr-2 h-4 w-4" />
-          下载配置文件
-        </Button>
+      <div className={`border-l transition-all duration-200 ${showPreview ? 'w-[600px]' : 'w-[40px]'}`}>
+        <div className="sticky top-0 h-screen flex">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute -left-3 top-1/2 transform -translate-y-1/2 z-10"
+            onClick={() => setShowPreview(!showPreview)}
+          >
+            {showPreview ? <PanelRightClose className="h-4 w-4" /> : <PanelRightOpen className="h-4 w-4" />}
+          </Button>
+          
+          <div className={`flex-1 overflow-auto transition-all duration-200 ${showPreview ? 'opacity-100 p-4' : 'opacity-0 p-0 w-0'}`}>
+            <ConfigPreview 
+              configData={configData} 
+              onConfigUpdate={handleConfigUpdate}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )
